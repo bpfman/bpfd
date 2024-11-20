@@ -31,11 +31,11 @@ fn get_tuf_path() -> Option<PathBuf> {
 
 impl CosignVerifier {
     pub(crate) fn new(allow_unsigned: bool) -> Result<Self, anyhow::Error> {
-        info!("Starting Cosign Verifier, downloading data from Sigstore TUF repository");
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .map_err(|e| anyhow!("Error building tokio runtime: {}", e))?;
+        info!("Starting Cosign Verifier, downloading data from Sigstore TUF repository");
         let oci_config = ClientConfig {
             protocol: ClientProtocol::Https,
             ..Default::default()
