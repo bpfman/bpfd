@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+// Copyright Authors of bpfman
+
+// clang-format off
+#include <linux/bpf.h>
+#include <linux/pkt_cls.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+// clang-format on
+
+volatile const __u8 GLOBAL_u8 = 0;
+volatile const __u32 GLOBAL_u32 = 0;
+
+void print_globals(char *prefix) {
+  bpf_printk("%s: GLOBAL_u8: 0x%02X, GLOBAL_u32: 0x%08X", prefix, GLOBAL_u8,
+             GLOBAL_u32);
+}
+
+SEC("fentry/do_unlinkat")
+int BPF_PROG(fentry_test) {
+  print_globals("FEN");
+  return 0;
+}
+
+SEC("fexit/do_unlinkat")
+int BPF_PROG(fexit_test) {
+  print_globals("FEX");
+  return 0;
+}
+
+SEC("kprobe/my_kprobe")
+int my_kprobe(struct pt_regs *ctx) {
+  print_globals(" KP");
+  return 0;
+}
+
+SEC("kretprobe/my_kretprobe")
+int my_kretprobe(struct pt_regs *ctx) {
+  print_globals("KRP");
+  return 0;
+}
+
+SEC("classifier/tc_pass")
+int tc_pass(struct __sk_buff *skb) {
+  print_globals(" TC");
+  return TC_ACT_OK;
+}
+
+SEC("classifier/tcx_pass")
+int tcx_pass(struct __sk_buff *skb) {
+  print_globals("TCX");
+  return TCX_PASS;
+}
+
+SEC("classifier/tcx_next")
+int tcx_next(struct __sk_buff *skb) {
+  print_globals("TCX");
+  return TCX_NEXT;
+}
+
+SEC("classifier/tcx_drop")
+int tcx_drop(struct __sk_buff *skb) {
+  print_globals("TCX");
+  return TCX_DROP;
+}
+
+SEC("classifier/tcx_redirect")
+int tcx_redirect(struct __sk_buff *skb) {
+  print_globals("TCX");
+  return TCX_REDIRECT;
+}
+
+struct syscalls_enter_open_args {
+  unsigned long long unused;
+  long syscall_nr;
+  long filename_ptr;
+  long flags;
+  long mode;
+};
+
+SEC("tracepoint/sys_enter_openat")
+int enter_openat(struct syscalls_enter_open_args *ctx) {
+  print_globals(" TP");
+  return 0;
+}
+
+SEC("uprobe/my_uprobe")
+int my_uprobe(struct pt_regs *ctx) {
+  print_globals(" UP");
+  return 0;
+}
+
+SEC("uretprobe/my_uretprobe")
+int my_uretprobe(struct pt_regs *ctx) {
+  print_globals("URP");
+  return 0;
+}
+
+SEC("xdp")
+int xdp_pass(struct xdp_md *ctx) {
+  print_globals("XDP");
+  return XDP_PASS;
+}
+
+char _license[] SEC("license") = "Dual BSD/GPL";
